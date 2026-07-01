@@ -74,7 +74,7 @@ function PasswordTab({
       setServerError(mapSupabaseError(error.message))
       return
     }
-    onSuccess(searchParams.get('returnUrl') ?? '/')
+    onSuccess(searchParams.get('returnUrl') ?? '/dashboard')
   }
 
   return (
@@ -132,7 +132,7 @@ function MagicLinkTab() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOtp({
       email: values.email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
     })
     if (error) {
       setServerError(mapSupabaseError(error.message))
