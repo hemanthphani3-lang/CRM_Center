@@ -45,7 +45,7 @@ function mapSignUpError(message: string): string {
   if (message.includes('Too many requests')) {
     return 'Too many sign-up attempts. Please wait a moment and try again.'
   }
-  return 'Something went wrong during sign-up. Please try again.'
+  return `Something went wrong: ${message}. Please try again.`
 }
 
 export default function SignUpPage() {

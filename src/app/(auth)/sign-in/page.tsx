@@ -46,7 +46,7 @@ function mapSupabaseError(message: string): string {
   if (message.includes('User not found')) {
     return 'No account found with that email address.'
   }
-  return 'Something went wrong. Please try again.'
+  return `Something went wrong: ${message}. Please try again.`
 }
 
 // ── Password tab ─────────────────────────────────────────────
