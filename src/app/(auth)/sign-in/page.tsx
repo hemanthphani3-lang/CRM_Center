@@ -65,16 +65,20 @@ function PasswordTab({
 
   const onSubmit = async (values: PasswordFormValues) => {
     setServerError(null)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    })
-    if (error) {
-      setServerError(mapSupabaseError(error.message))
-      return
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      })
+      if (error) {
+        setServerError(mapSupabaseError(error.message))
+        return
+      }
+      onSuccess(searchParams.get('returnUrl') ?? '/dashboard')
+    } catch (err: any) {
+      setServerError(`Client Error: ${err.message || err}`)
     }
-    onSuccess(searchParams.get('returnUrl') ?? '/dashboard')
   }
 
   return (
@@ -129,16 +133,20 @@ function MagicLinkTab() {
 
   const onSubmit = async (values: MagicLinkFormValues) => {
     setServerError(null)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
-      email: values.email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
-    })
-    if (error) {
-      setServerError(mapSupabaseError(error.message))
-      return
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOtp({
+        email: values.email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+      })
+      if (error) {
+        setServerError(mapSupabaseError(error.message))
+        return
+      }
+      setSent(true)
+    } catch (err: any) {
+      setServerError(`Client Error: ${err.message || err}`)
     }
-    setSent(true)
   }
 
   if (sent) {

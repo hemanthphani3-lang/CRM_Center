@@ -60,58 +60,62 @@ export default function SignUpPage() {
 
   const onSubmit = async (values: SignUpFormValues) => {
     setServerError(null)
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    // 1. Create the auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: { full_name: values.fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
+      // 1. Create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: { full_name: values.fullName },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
 
-    if (authError) {
-      setServerError(mapSignUpError(authError.message))
-      return
+      if (authError) {
+        setServerError(mapSignUpError(authError.message))
+        return
+      }
+
+      const userId = authData.user?.id
+      if (!userId) {
+        setServerError('Sign-up failed. Please try again.')
+        return
+      }
+
+      // 2. Create the organization
+      const slug = values.organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .insert({ name: values.organizationName, slug })
+        .select('id')
+        .single()
+
+      if (orgError) {
+        setServerError('Account created but organization setup failed. Please contact support.')
+        return
+      }
+
+      // 3. Upsert the profile (trigger may have already created it)
+      await supabase.from('profiles').upsert({
+        id: userId,
+        full_name: values.fullName,
+        email: values.email,
+        org_id: org.id,
+        role: 'admin',
+        is_active: true,
+      })
+
+      setSuccess(true)
+    } catch (err: any) {
+      setServerError(`Client Error: ${err.message || err}`)
     }
-
-    const userId = authData.user?.id
-    if (!userId) {
-      setServerError('Sign-up failed. Please try again.')
-      return
-    }
-
-    // 2. Create the organization
-    const slug = values.organizationName
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .insert({ name: values.organizationName, slug })
-      .select('id')
-      .single()
-
-    if (orgError) {
-      setServerError('Account created but organization setup failed. Please contact support.')
-      return
-    }
-
-    // 3. Upsert the profile (trigger may have already created it)
-    await supabase.from('profiles').upsert({
-      id: userId,
-      full_name: values.fullName,
-      email: values.email,
-      org_id: org.id,
-      role: 'admin',
-      is_active: true,
-    })
-
-    setSuccess(true)
   }
 
   if (success) {
